@@ -1,4 +1,4 @@
-// Copyright 2021 Weaveworks or its affiliates. All Rights Reserved.
+// Copyright 2024 Liquid Metal Authors. All Rights Reserved.
 // SPDX-License-Identifier: MPL-2.0
 
 package defaults

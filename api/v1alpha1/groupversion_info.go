@@ -1,9 +1,9 @@
-// Copyright 2021 Weaveworks or its affiliates. All Rights Reserved.
+// Copyright 2024 Liquid Metal Authors. All Rights Reserved.
 // SPDX-License-Identifier: MPL-2.0
 
 // Package v1alpha1 contains API Schema definitions for the infrastructure v1alpha1 API group
-//+kubebuilder:object:generate=true
-//+groupName=infrastructure.cluster.x-k8s.io
+// +kubebuilder:object:generate=true
+// +groupName=infrastructure.cluster.x-k8s.io
 package v1alpha1
 
 import (

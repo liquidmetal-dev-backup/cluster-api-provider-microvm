@@ -6,7 +6,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	flclient "github.com/weaveworks-liquidmetal/controller-pkg/client"
+	flclient "github.com/liquidmetal-dev/controller-pkg/client"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,9 +16,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/api/v1alpha1"
-	infrav1 "github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/api/v1alpha1"
-	"github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/internal/scope"
+	"github.com/liquidmetal-dev/cluster-api-provider-microvm/api/v1alpha1"
+	infrav1 "github.com/liquidmetal-dev/cluster-api-provider-microvm/api/v1alpha1"
+	"github.com/liquidmetal-dev/cluster-api-provider-microvm/internal/scope"
 )
 
 func TestMachineProviderID(t *testing.T) {
@@ -405,7 +405,7 @@ func newMachine(clusterName, machineName string) *clusterv1.Machine {
 	return &clusterv1.Machine{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: map[string]string{
-				clusterv1.ClusterLabelName: clusterName,
+				clusterv1.ClusterNameLabel: clusterName,
 			},
 			Name:      machineName,
 			Namespace: "default",
@@ -456,7 +456,7 @@ func newMicrovmMachine(clusterName, machineName string, providerID string) *infr
 	mvmMachine := &infrav1.MicrovmMachine{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: map[string]string{
-				clusterv1.ClusterLabelName: clusterName,
+				clusterv1.ClusterNameLabel: clusterName,
 			},
 			Name:      machineName,
 			Namespace: "default",

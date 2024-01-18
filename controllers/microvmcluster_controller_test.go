@@ -1,4 +1,4 @@
-// Copyright 2021 Weaveworks or its affiliates. All Rights Reserved.
+// Copyright 2024 Liquid Metal Authors. All Rights Reserved.
 // SPDX-License-Identifier: MPL-2.0.
 
 package controllers_test
@@ -18,7 +18,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
 
-	infrav1 "github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/api/v1alpha1"
+	infrav1 "github.com/liquidmetal-dev/cluster-api-provider-microvm/api/v1alpha1"
 )
 
 func TestClusterReconciliationNoEndpoint(t *testing.T) {

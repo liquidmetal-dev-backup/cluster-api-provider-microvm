@@ -14,12 +14,11 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/test/framework"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/internal/scope"
+	"github.com/liquidmetal-dev/cluster-api-provider-microvm/internal/scope"
 )
 
 // SetEnvVar adds some logging around which vars are set for the test.
@@ -39,7 +38,7 @@ func FailureDomainSpread(proxy framework.ClusterProxy, namespace, clusterName st
 	lister := proxy.GetClient()
 	inClustersNamespaceListOption := client.InNamespace(namespace)
 	matchClusterListOption := client.MatchingLabels{
-		clusterv1.ClusterLabelName: clusterName,
+		clusterv1.ClusterNameLabel: clusterName,
 	}
 
 	machineList := &clusterv1.MachineList{}
@@ -81,7 +80,7 @@ func Nginx(name, namespace string, reps int32) *appsv1.Deployment {
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{"app": name},
 			},
-			Replicas: pointer.Int32Ptr(reps),
+			Replicas: &reps,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{"app": name},

@@ -1,4 +1,4 @@
-// Copyright 2021 Weaveworks or its affiliates. All Rights Reserved.
+// Copyright 2024 Liquid Metal Authors. All Rights Reserved.
 // SPDX-License-Identifier: MPL-2.0
 
 package controllers
@@ -25,11 +25,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	infrav1 "github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/api/v1alpha1"
-	"github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/internal/defaults"
-	"github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/internal/scope"
+	infrav1 "github.com/liquidmetal-dev/cluster-api-provider-microvm/api/v1alpha1"
+	"github.com/liquidmetal-dev/cluster-api-provider-microvm/internal/defaults"
+	"github.com/liquidmetal-dev/cluster-api-provider-microvm/internal/scope"
 )
 
 const (
@@ -243,7 +242,7 @@ func (r *MicrovmClusterReconciler) SetupWithManager(
 		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log, r.WatchFilterValue)).
 		WithEventFilter(predicates.ResourceIsNotExternallyManaged(log)).
 		Watches(
-			&source.Kind{Type: &clusterv1.Cluster{}},
+			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(
 				util.ClusterToInfrastructureMapFunc(ctx,
 					infrav1.GroupVersion.WithKind("MicrovmCluster"),

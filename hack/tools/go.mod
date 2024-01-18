@@ -1,6 +1,6 @@
-module github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/hack/tools
+module github.com/liquidmetal-dev/cluster-api-provider-microvm/hack/tools
 
-go 1.17
+go 1.21
 
 require (
 	github.com/golangci/golangci-lint v1.41.1
