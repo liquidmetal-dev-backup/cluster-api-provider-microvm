@@ -409,8 +409,8 @@ github.com/valyala/fastjson v1.6.4 h1:uAUNq9Z6ymTgGhcm0UynUAB6tlbakBrz6CQFax3BXV
 github.com/valyala/fastjson v1.6.4/go.mod h1:CLCAqky6SMuOcxStkYQvblddUtoRxhYMGLrsQns1aXY=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 h1:eY9dn8+vbi4tKz5Qo6v2eYzo7kUS51QINcR5jNpbZS8=
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
-github.com/yitsushi/macpot v1.0.2 h1:LSiBfVKRhzrvUTBDO2GZYAQvS+gG9wdzPaaiNeR29KM=
-github.com/yitsushi/macpot v1.0.2/go.mod h1:7KBzokvUNbcsR1VcmKwmYRWB2FyAWcIll4L93b2A8q4=
+github.com/yitsushi/macpot v1.0.3 h1:pINAfemjAvndfvzVG2yjgxl+jiW9VtbEBrRdImQthco=
+github.com/yitsushi/macpot v1.0.3/go.mod h1:qYmz54t8Ci34VKW5SlkHqWo6RVq/OQ31aFY2E7YLOko=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
