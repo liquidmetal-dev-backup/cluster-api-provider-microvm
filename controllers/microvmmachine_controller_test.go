@@ -16,6 +16,7 @@ import (
 	"k8s.io/utils/pointer"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/liquidmetal-dev/controller-pkg/types/microvm"
 	flintlocktypes "github.com/liquidmetal-dev/flintlock/api/types"
@@ -130,7 +131,9 @@ func TestMachineReconcileClusterInfraNotReady(t *testing.T) {
 	apiObjects := defaultClusterObjects()
 	apiObjects.Cluster.Status.InfrastructureReady = false
 
-	client := createFakeClient(g, apiObjects.AsRuntimeObjects())
+	subresources := []client.Object{&clusterv1.Machine{}, &infrav1.MicrovmMachine{}}
+	client := createFakeClientWithSubresources(g, apiObjects.AsRuntimeObjects(), subresources)
+
 	result, err := reconcileMachine(client, nil)
 	g.Expect(err).NotTo(HaveOccurred(), "Reconciling when cluster infrastructure is not ready should not error")
 	g.Expect(result.IsZero()).To(BeTrue(), "Expect no requeue to be requested")
@@ -147,7 +150,9 @@ func TestMachineReconcileBoostrapNotReady(t *testing.T) {
 	apiObjects := defaultClusterObjects()
 	apiObjects.Machine.Spec.Bootstrap.DataSecretName = nil
 
-	client := createFakeClient(g, apiObjects.AsRuntimeObjects())
+	subresources := []client.Object{&clusterv1.Machine{}, &infrav1.MicrovmMachine{}}
+	client := createFakeClientWithSubresources(g, apiObjects.AsRuntimeObjects(), subresources)
+
 	result, err := reconcileMachine(client, nil)
 	g.Expect(err).NotTo(HaveOccurred(), "Reconciling when bootstrap data is not ready should not error")
 	g.Expect(result.IsZero()).To(BeTrue(), "Expect no requeue to be requested")
@@ -179,7 +184,9 @@ func TestMachineReconcileMachineExistsAndRunning(t *testing.T) {
 	fakeAPIClient := fakes.FakeClient{}
 	withExistingMicrovm(&fakeAPIClient, flintlocktypes.MicroVMStatus_CREATED)
 
-	client := createFakeClient(g, apiObjects.AsRuntimeObjects())
+	subresources := []client.Object{&clusterv1.Machine{}, &infrav1.MicrovmMachine{}}
+	client := createFakeClientWithSubresources(g, apiObjects.AsRuntimeObjects(), subresources)
+
 	result, err := reconcileMachine(client, &fakeAPIClient)
 	g.Expect(err).NotTo(HaveOccurred(), "Reconciling when microvm service exists should not return error")
 	g.Expect(result.IsZero()).To(BeTrue(), "Expect no requeue to be requested")
@@ -197,7 +204,9 @@ func TestMachineReconcileMachineExistsAndPending(t *testing.T) {
 	fakeAPIClient := fakes.FakeClient{}
 	withExistingMicrovm(&fakeAPIClient, flintlocktypes.MicroVMStatus_PENDING)
 
-	client := createFakeClient(g, apiObjects.AsRuntimeObjects())
+	subresources := []client.Object{&clusterv1.Machine{}, &infrav1.MicrovmMachine{}}
+	client := createFakeClientWithSubresources(g, apiObjects.AsRuntimeObjects(), subresources)
+
 	result, err := reconcileMachine(client, &fakeAPIClient)
 	g.Expect(err).NotTo(HaveOccurred(), "Reconciling when microvm service exists and state pending should not return error")
 	g.Expect(result.IsZero()).To(BeFalse(), "Expect a requeue to be requested")
@@ -218,7 +227,9 @@ func TestMachineReconcileMachineExistsButFailed(t *testing.T) {
 	fakeAPIClient := fakes.FakeClient{}
 	withExistingMicrovm(&fakeAPIClient, flintlocktypes.MicroVMStatus_FAILED)
 
-	client := createFakeClient(g, apiObjects.AsRuntimeObjects())
+	subresources := []client.Object{&clusterv1.Machine{}, &infrav1.MicrovmMachine{}}
+	client := createFakeClientWithSubresources(g, apiObjects.AsRuntimeObjects(), subresources)
+
 	_, err := reconcileMachine(client, &fakeAPIClient)
 	g.Expect(err).To(HaveOccurred(), "Reconciling when microvm service exists and state failed should return an error")
 
@@ -238,7 +249,9 @@ func TestMachineReconcileMachineExistsButUnknownState(t *testing.T) {
 	fakeAPIClient := fakes.FakeClient{}
 	withExistingMicrovm(&fakeAPIClient, flintlocktypes.MicroVMStatus_MicroVMState(42))
 
-	client := createFakeClient(g, apiObjects.AsRuntimeObjects())
+	subresources := []client.Object{&clusterv1.Machine{}, &infrav1.MicrovmMachine{}}
+	client := createFakeClientWithSubresources(g, apiObjects.AsRuntimeObjects(), subresources)
+
 	_, err := reconcileMachine(client, &fakeAPIClient)
 	g.Expect(err).To(HaveOccurred(), "Reconciling when microvm service exists and state is unknown should return an error")
 
@@ -260,7 +273,9 @@ func TestMachineReconcileNoVmCreateSucceeds(t *testing.T) {
 	withMissingMicrovm(&fakeAPIClient)
 	withCreateMicrovmSuccess(&fakeAPIClient)
 
-	client := createFakeClient(g, apiObjects.AsRuntimeObjects())
+	subresources := []client.Object{&clusterv1.Machine{}, &infrav1.MicrovmMachine{}}
+	client := createFakeClientWithSubresources(g, apiObjects.AsRuntimeObjects(), subresources)
+
 	result, err := reconcileMachine(client, &fakeAPIClient)
 
 	g.Expect(err).NotTo(HaveOccurred(), "Reconciling when creating microvm should not return error")
@@ -295,7 +310,9 @@ func TestMachineReconcileNoMachineFailureDomainCreateSucceeds(t *testing.T) {
 	withMissingMicrovm(&fakeAPIClient)
 	withCreateMicrovmSuccess(&fakeAPIClient)
 
-	client := createFakeClient(g, apiObjects.AsRuntimeObjects())
+	subresources := []client.Object{&clusterv1.Machine{}, &infrav1.MicrovmMachine{}}
+	client := createFakeClientWithSubresources(g, apiObjects.AsRuntimeObjects(), subresources)
+
 	result, err := reconcileMachine(client, &fakeAPIClient)
 
 	g.Expect(err).NotTo(HaveOccurred(), "Reconciling when creating microvm should not return error")
@@ -391,7 +408,9 @@ func TestMachineReconcileNoVmCreateAdditionReconcile(t *testing.T) {
 	withMissingMicrovm(&fakeAPIClient)
 	withCreateMicrovmSuccess(&fakeAPIClient)
 
-	client := createFakeClient(g, apiObjects.AsRuntimeObjects())
+	subresources := []client.Object{&clusterv1.Machine{}, &infrav1.MicrovmMachine{}}
+	client := createFakeClientWithSubresources(g, apiObjects.AsRuntimeObjects(), subresources)
+
 	result, err := reconcileMachine(client, &fakeAPIClient)
 	g.Expect(err).NotTo(HaveOccurred(), "Reconciling when creating microvm should not return error")
 	g.Expect(result.IsZero()).To(BeFalse(), "Expect requeue to be requested after create")
@@ -418,7 +437,8 @@ func TestMachineReconcileDeleteVmSucceeds(t *testing.T) {
 	fakeAPIClient := fakes.FakeClient{}
 	withExistingMicrovm(&fakeAPIClient, flintlocktypes.MicroVMStatus_CREATED)
 
-	client := createFakeClient(g, apiObjects.AsRuntimeObjects())
+	subresources := []client.Object{&clusterv1.Machine{}, &infrav1.MicrovmMachine{}}
+	client := createFakeClientWithSubresources(g, apiObjects.AsRuntimeObjects(), subresources)
 
 	result, err := reconcileMachine(client, &fakeAPIClient)
 	g.Expect(err).NotTo(HaveOccurred(), "Reconciling when deleting microvm should not return error")
@@ -489,7 +509,9 @@ func TestMachineReconcileDeleteDeleteErrors(t *testing.T) {
 	withExistingMicrovm(&fakeAPIClient, flintlocktypes.MicroVMStatus_CREATED)
 	fakeAPIClient.DeleteMicroVMReturns(nil, errors.New("something terrible happened"))
 
-	client := createFakeClient(g, apiObjects.AsRuntimeObjects())
+	subresources := []client.Object{&clusterv1.Machine{}, &infrav1.MicrovmMachine{}}
+	client := createFakeClientWithSubresources(g, apiObjects.AsRuntimeObjects(), subresources)
+
 	_, err := reconcileMachine(client, &fakeAPIClient)
 	g.Expect(err).To(HaveOccurred(), "Reconciling when deleting microvm errors should return error")
 

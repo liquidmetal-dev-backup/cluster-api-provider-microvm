@@ -170,7 +170,17 @@ func createFakeClient(g *WithT, objects []runtime.Object) client.Client {
 	g.Expect(clusterv1.AddToScheme(scheme)).To(Succeed())
 	g.Expect(corev1.AddToScheme(scheme)).To(Succeed())
 
-	return fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
+	return fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).WithStatusSubresource().Build()
+}
+
+func createFakeClientWithSubresources(g *WithT, objects []runtime.Object, subResObjects []client.Object) client.Client {
+	scheme := runtime.NewScheme()
+
+	g.Expect(infrav1.AddToScheme(scheme)).To(Succeed())
+	g.Expect(clusterv1.AddToScheme(scheme)).To(Succeed())
+	g.Expect(corev1.AddToScheme(scheme)).To(Succeed())
+
+	return fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).WithStatusSubresource(subResObjects...).Build()
 }
 
 func createMicrovmCluster() *infrav1.MicrovmCluster {
@@ -205,6 +215,10 @@ func createMicrovmCluster() *infrav1.MicrovmCluster {
 
 func createCluster() *clusterv1.Cluster {
 	return &clusterv1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Cluster",
+			APIVersion: "cluster.x-k8s.io/v1alpha1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      testClusterName,
 			Namespace: testClusterNamespace,
@@ -228,6 +242,10 @@ func createCluster() *clusterv1.Cluster {
 
 func createMicrovmMachine() *infrav1.MicrovmMachine {
 	return &infrav1.MicrovmMachine{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "MicrovmMachine",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1alpha1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      testMachineName,
 			Namespace: testClusterNamespace,
@@ -272,6 +290,10 @@ func createMicrovmMachine() *infrav1.MicrovmMachine {
 func createMachine() *clusterv1.Machine {
 	testFailureDomain := "127.0.0.1:9090"
 	return &clusterv1.Machine{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Machine",
+			APIVersion: "cluster.x-k8s.io/v1beta1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      testMachineName,
 			Namespace: testClusterNamespace,
