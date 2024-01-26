@@ -24,8 +24,9 @@ import (
 	"os"
 	"time"
 
+	client "github.com/liquidmetal-dev/controller-pkg/client"
+
 	"github.com/spf13/pflag"
-	client "github.com/weaveworks-liquidmetal/controller-pkg/client"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -33,16 +34,20 @@ import (
 	cgrecord "k8s.io/client-go/tools/record"
 	klog "k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	expclusterv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/flags"
 	"sigs.k8s.io/cluster-api/util/record"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	//+kubebuilder:scaffold:imports
-	infrav1 "github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/api/v1alpha1"
-	"github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/controllers"
-	"github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/version"
+	infrav1 "github.com/liquidmetal-dev/cluster-api-provider-microvm/api/v1alpha1"
+	"github.com/liquidmetal-dev/cluster-api-provider-microvm/controllers"
+	"github.com/liquidmetal-dev/cluster-api-provider-microvm/version"
 )
 
 //nolint:gochecknoinits // Maybe we can remove it, now just ignore.
@@ -58,8 +63,9 @@ func init() {
 
 //nolint:gochecknoglobals // Maybe we can remove them, now just ignore.
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme            = runtime.NewScheme()
+	setupLog          = ctrl.Log.WithName("setup")
+	diagnosticOptions = flags.DiagnosticsOptions{}
 
 	enableLeaderElection        bool
 	metricsAddr                 string
@@ -202,7 +208,13 @@ func main() {
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 
+	diagnosticOpts := flags.GetDiagnosticsOptions(diagnosticOptions)
+
+	var watchNamespaces map[string]cache.Config
 	if watchNamespace != "" {
+		watchNamespaces = map[string]cache.Config{
+			watchNamespace: {},
+		}
 		setupLog.Info("Watching cluster-api objects only in namespace for reconciliation", "namespace", watchNamespace)
 	}
 
@@ -224,17 +236,21 @@ func main() {
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                     scheme,
-		MetricsBindAddress:         metricsAddr,
 		LeaderElection:             enableLeaderElection,
 		LeaderElectionResourceLock: resourcelock.LeasesResourceLock,
 		LeaderElectionID:           "controller-leader-elect-capmvm",
 		LeaderElectionNamespace:    leaderElectionNamespace,
-		SyncPeriod:                 &syncPeriod,
-		Namespace:                  watchNamespace,
+		Metrics:                    diagnosticOpts,
 		EventBroadcaster:           broadcaster,
-		Port:                       webhookPort,
-		CertDir:                    webhookCertDir,
 		HealthProbeBindAddress:     healthAddr,
+		Cache: cache.Options{
+			DefaultNamespaces: watchNamespaces,
+			SyncPeriod:        &syncPeriod,
+		},
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Port:    webhookPort,
+			CertDir: webhookCertDir,
+		}),
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -275,7 +291,7 @@ func main() {
 func setupReconcilers(ctx context.Context, mgr ctrl.Manager) error {
 	managerOptions := controller.Options{
 		MaxConcurrentReconciles: microvmClusterConcurrency,
-		RecoverPanic:            true,
+		RecoverPanic:            ptr.To[bool](true),
 	}
 
 	if err := (&controllers.MicrovmClusterReconciler{

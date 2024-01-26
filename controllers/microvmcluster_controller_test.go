@@ -1,4 +1,4 @@
-// Copyright 2021 Weaveworks or its affiliates. All Rights Reserved.
+// Copyright 2024 Liquid Metal Authors. All Rights Reserved.
 // SPDX-License-Identifier: MPL-2.0.
 
 package controllers_test
@@ -17,8 +17,9 @@ import (
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	infrav1 "github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/api/v1alpha1"
+	infrav1 "github.com/liquidmetal-dev/cluster-api-provider-microvm/api/v1alpha1"
 )
 
 func TestClusterReconciliationNoEndpoint(t *testing.T) {
@@ -69,7 +70,9 @@ func TestClusterReconciliationWithClusterEndpoint(t *testing.T) {
 		tenantClusterNodes,
 	}
 
-	client := createFakeClient(g, objects)
+	subresources := []client.Object{&clusterv1.Cluster{}, &infrav1.MicrovmCluster{}}
+
+	client := createFakeClientWithSubresources(g, objects, subresources)
 	result, err := reconcileCluster(client)
 
 	g.Expect(err).NotTo(HaveOccurred())
@@ -115,7 +118,9 @@ func TestClusterReconciliationWithMvmClusterEndpoint(t *testing.T) {
 		tenantClusterNodes,
 	}
 
-	client := createFakeClient(g, objects)
+	subresources := []client.Object{&clusterv1.Cluster{}, &infrav1.MicrovmCluster{}}
+	client := createFakeClientWithSubresources(g, objects, subresources)
+
 	result, err := reconcileCluster(client)
 
 	g.Expect(err).NotTo(HaveOccurred())
@@ -155,7 +160,9 @@ func TestClusterReconciliationWithClusterEndpointAPIServerNotReady(t *testing.T)
 		tenantClusterNodes,
 	}
 
-	client := createFakeClient(g, objects)
+	subresources := []client.Object{&clusterv1.Cluster{}, &infrav1.MicrovmCluster{}}
+	client := createFakeClientWithSubresources(g, objects, subresources)
+
 	result, err := reconcileCluster(client)
 
 	g.Expect(err).NotTo(HaveOccurred())
@@ -253,9 +260,13 @@ func TestClusterReconciliationDelete(t *testing.T) {
 	mvmCluster.ObjectMeta.DeletionTimestamp = &metav1.Time{
 		Time: time.Now(),
 	}
+	mvmCluster.Finalizers = []string{"testing"}
+
+	cluster := createCluster()
+	cluster.Finalizers = []string{clusterv1.ClusterFinalizer}
 
 	objects := []runtime.Object{
-		createCluster(),
+		cluster,
 		mvmCluster,
 	}
 

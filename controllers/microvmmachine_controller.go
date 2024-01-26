@@ -1,4 +1,4 @@
-// Copyright 2021 Weaveworks or its affiliates. All Rights Reserved.
+// Copyright 2024 Liquid Metal Authors. All Rights Reserved.
 // SPDX-License-Identifier: MPL-2.0.
 
 package controllers
@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	flclient "github.com/weaveworks-liquidmetal/controller-pkg/client"
-	flservice "github.com/weaveworks-liquidmetal/controller-pkg/services/microvm"
-	"github.com/weaveworks-liquidmetal/controller-pkg/types/microvm"
-	flintlocktypes "github.com/weaveworks-liquidmetal/flintlock/api/types"
+	flclient "github.com/liquidmetal-dev/controller-pkg/client"
+	flservice "github.com/liquidmetal-dev/controller-pkg/services/microvm"
+	"github.com/liquidmetal-dev/controller-pkg/types/microvm"
+	flintlocktypes "github.com/liquidmetal-dev/flintlock/api/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -30,11 +30,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	infrav1 "github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/api/v1alpha1"
-	"github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/internal/defaults"
-	"github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/internal/scope"
+	infrav1 "github.com/liquidmetal-dev/cluster-api-provider-microvm/api/v1alpha1"
+	"github.com/liquidmetal-dev/cluster-api-provider-microvm/internal/defaults"
+	"github.com/liquidmetal-dev/cluster-api-provider-microvm/internal/scope"
 )
 
 // MicrovmMachineReconciler reconciles a MicrovmMachine object.
@@ -390,7 +389,7 @@ func (r *MicrovmMachineReconciler) SetupWithManager(
 ) error {
 	log := ctrl.LoggerFrom(ctx)
 
-	clusterToObjectFunc, err := util.ClusterToObjectsMapper(
+	clusterToObjectFunc, err := util.ClusterToTypedObjectsMapper(
 		r.Client,
 		&infrav1.MicrovmMachineList{},
 		mgr.GetScheme(),
@@ -405,17 +404,17 @@ func (r *MicrovmMachineReconciler) SetupWithManager(
 		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log, r.WatchFilterValue)).
 		WithEventFilter(predicates.ResourceIsNotExternallyManaged(log)).
 		Watches(
-			&source.Kind{Type: &clusterv1.Machine{}},
+			&clusterv1.Machine{},
 			handler.EnqueueRequestsFromMapFunc(
 				util.MachineToInfrastructureMapFunc(infrav1.GroupVersion.WithKind("MicrovmMachine")),
 			),
 		).
 		Watches(
-			&source.Kind{Type: &infrav1.MicrovmCluster{}},
-			handler.EnqueueRequestsFromMapFunc(r.MicroVMClusterToMicrovmMachine(ctx, log)),
+			&infrav1.MicrovmCluster{},
+			handler.EnqueueRequestsFromMapFunc(r.MicroVMClusterToMicrovmMachine(log)),
 		).
 		Watches(
-			&source.Kind{Type: &clusterv1.Cluster{}},
+			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(clusterToObjectFunc),
 			builder.WithPredicates(predicates.ClusterUnpausedAndInfrastructureReady(log)),
 		)
@@ -433,11 +432,8 @@ func (r *MicrovmMachineReconciler) SetupWithManager(
 // MicrovmCluster and queue requests (via controller-runtime) for those machines
 // to be reconciled so that they can take into account any changes that are
 // relevant at the MicrovmCluster level.
-func (r *MicrovmMachineReconciler) MicroVMClusterToMicrovmMachine(
-	ctx context.Context,
-	log logr.Logger,
-) handler.MapFunc {
-	return func(o client.Object) []ctrl.Request {
+func (r *MicrovmMachineReconciler) MicroVMClusterToMicrovmMachine(log logr.Logger) handler.MapFunc {
+	return func(ctx context.Context, o client.Object) []ctrl.Request {
 		mvmCluster, ok := o.(*infrav1.MicrovmCluster)
 		if !ok {
 			log.Error(errExpectedMicrovmCluster, "failed to get microvmcluster")

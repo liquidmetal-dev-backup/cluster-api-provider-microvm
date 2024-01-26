@@ -1,4 +1,4 @@
-// Copyright 2021 Weaveworks or its affiliates. All Rights Reserved.
+// Copyright 2024 Liquid Metal Authors. All Rights Reserved.
 // SPDX-License-Identifier: MPL-2.0.
 
 package controllers_test
@@ -11,13 +11,14 @@ import (
 	. "github.com/onsi/gomega"
 	"gopkg.in/yaml.v2"
 
-	flclient "github.com/weaveworks-liquidmetal/controller-pkg/client"
-	"github.com/weaveworks-liquidmetal/controller-pkg/types/microvm"
+	flclient "github.com/liquidmetal-dev/controller-pkg/client"
+	"github.com/liquidmetal-dev/controller-pkg/types/microvm"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	fakeremote "sigs.k8s.io/cluster-api/controllers/remote/fake"
 	"sigs.k8s.io/cluster-api/util/conditions"
@@ -25,12 +26,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	infrav1 "github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/api/v1alpha1"
-	"github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/controllers"
-	"github.com/weaveworks-liquidmetal/cluster-api-provider-microvm/controllers/fakes"
-	flintlockv1 "github.com/weaveworks-liquidmetal/flintlock/api/services/microvm/v1alpha1"
-	flintlocktypes "github.com/weaveworks-liquidmetal/flintlock/api/types"
-	"github.com/weaveworks-liquidmetal/flintlock/client/cloudinit/userdata"
+	infrav1 "github.com/liquidmetal-dev/cluster-api-provider-microvm/api/v1alpha1"
+	"github.com/liquidmetal-dev/cluster-api-provider-microvm/controllers"
+	"github.com/liquidmetal-dev/cluster-api-provider-microvm/controllers/fakes"
+	flintlockv1 "github.com/liquidmetal-dev/flintlock/api/services/microvm/v1alpha1"
+	flintlocktypes "github.com/liquidmetal-dev/flintlock/api/types"
+	"github.com/liquidmetal-dev/flintlock/client/cloudinit/userdata"
 )
 
 const (
@@ -169,7 +170,17 @@ func createFakeClient(g *WithT, objects []runtime.Object) client.Client {
 	g.Expect(clusterv1.AddToScheme(scheme)).To(Succeed())
 	g.Expect(corev1.AddToScheme(scheme)).To(Succeed())
 
-	return fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).Build()
+	return fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).WithStatusSubresource().Build()
+}
+
+func createFakeClientWithSubresources(g *WithT, objects []runtime.Object, subResObjects []client.Object) client.Client {
+	scheme := runtime.NewScheme()
+
+	g.Expect(infrav1.AddToScheme(scheme)).To(Succeed())
+	g.Expect(clusterv1.AddToScheme(scheme)).To(Succeed())
+	g.Expect(corev1.AddToScheme(scheme)).To(Succeed())
+
+	return fake.NewClientBuilder().WithScheme(scheme).WithRuntimeObjects(objects...).WithStatusSubresource(subResObjects...).Build()
 }
 
 func createMicrovmCluster() *infrav1.MicrovmCluster {
@@ -204,6 +215,10 @@ func createMicrovmCluster() *infrav1.MicrovmCluster {
 
 func createCluster() *clusterv1.Cluster {
 	return &clusterv1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Cluster",
+			APIVersion: "cluster.x-k8s.io/v1alpha1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      testClusterName,
 			Namespace: testClusterNamespace,
@@ -227,6 +242,10 @@ func createCluster() *clusterv1.Cluster {
 
 func createMicrovmMachine() *infrav1.MicrovmMachine {
 	return &infrav1.MicrovmMachine{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "MicrovmMachine",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1alpha1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      testMachineName,
 			Namespace: testClusterNamespace,
@@ -239,7 +258,7 @@ func createMicrovmMachine() *infrav1.MicrovmMachine {
 			},
 		},
 		Spec: infrav1.MicrovmMachineSpec{
-			ProviderID: pointer.String(testMachineUID),
+			ProviderID: ptr.To[string](testMachineUID),
 			VMSpec: microvm.VMSpec{
 				VCPU:     2,
 				MemoryMb: 2048,
@@ -271,11 +290,15 @@ func createMicrovmMachine() *infrav1.MicrovmMachine {
 func createMachine() *clusterv1.Machine {
 	testFailureDomain := "127.0.0.1:9090"
 	return &clusterv1.Machine{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Machine",
+			APIVersion: "cluster.x-k8s.io/v1beta1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      testMachineName,
 			Namespace: testClusterNamespace,
 			Labels: map[string]string{
-				clusterv1.ClusterLabelName: testClusterName,
+				clusterv1.ClusterNameLabel: testClusterName,
 			},
 		},
 		Spec: clusterv1.MachineSpec{
