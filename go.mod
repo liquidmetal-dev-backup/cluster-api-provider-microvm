@@ -15,8 +15,9 @@ require (
 	github.com/liquidmetal-dev/controller-pkg/types/microvm v0.0.0-20240125153014-ade385f224bc
 	github.com/liquidmetal-dev/flintlock/api v0.0.0-20240125150805-766c633b81f9
 	github.com/liquidmetal-dev/flintlock/client v0.0.0-20240125150805-766c633b81f9
-	github.com/onsi/ginkgo/v2 v2.14.0
-	github.com/onsi/gomega v1.30.0
+	github.com/onsi/ginkgo/v2 v2.15.0
+	github.com/onsi/gomega v1.31.1
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/pflag v1.0.5
 	github.com/yitsushi/macpot v1.0.2
 	google.golang.org/grpc v1.59.0
@@ -101,7 +102,6 @@ require (
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.18.0 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.45.0 // indirect
